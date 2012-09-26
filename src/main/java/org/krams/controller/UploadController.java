@@ -25,6 +25,10 @@ public class UploadController {
 	public String form() {
 		return "form";
 	}
+	@RequestMapping(value="index")
+	public String index() {
+		return "index";
+	}
 	
 	@RequestMapping(value="/message", method=RequestMethod.POST)
 	public @ResponseBody StatusResponse message(@RequestBody Message message) {
@@ -48,6 +52,24 @@ public class UploadController {
 				"http://localhost:8080/spring-fileupload-tutorial/resources/"+file.getOriginalFilename());
 
 		uploadedFiles.add(u);
+		return uploadedFiles;
+	}
+	
+	@RequestMapping(value="/multifile", method=RequestMethod.POST)
+	public @ResponseBody List<UploadedFile> multifile(
+			@RequestParam("files[]") MultipartFile[] files) {
+		// Do custom steps here
+		// i.e. Save the file to a temporary location or database
+		logger.debug("Writing file to disk...done");
+		List<UploadedFile> uploadedFiles = new ArrayList<UploadedFile>();
+		for (MultipartFile file : files) {
+			UploadedFile u = new UploadedFile(file.getOriginalFilename(),
+					Long.valueOf(file.getSize()).intValue(),
+					"http://localhost:8080/spring-fileupload-tutorial/resources/"+file.getOriginalFilename());
+
+			uploadedFiles.add(u);
+		}
+		
 		return uploadedFiles;
 	}
 }
