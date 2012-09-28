@@ -1,7 +1,13 @@
 package org.krams.controller;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
 import org.krams.domain.Message;
@@ -26,7 +32,8 @@ public class UploadController {
 		return "form";
 	}
 	@RequestMapping(value="index")
-	public String index() {
+	public String index(HttpSession session) {
+		logger.debug( session.getServletContext().getRealPath("/resources/uuupload/nbia.png"));
 		return "index";
 	}
 	
@@ -45,7 +52,6 @@ public class UploadController {
 		// Do custom steps here
 		// i.e. Save the file to a temporary location or database
 		logger.debug("Writing file to disk...done");
-		
 		List<UploadedFile> uploadedFiles = new ArrayList<UploadedFile>();
 		UploadedFile u = new UploadedFile(file.getOriginalFilename(),
 				Long.valueOf(file.getSize()).intValue(),
@@ -57,19 +63,33 @@ public class UploadController {
 	
 	@RequestMapping(value="/multifile", method=RequestMethod.POST)
 	public @ResponseBody List<UploadedFile> multifile(
-			@RequestParam("files[]") MultipartFile[] files) {
+			@RequestParam("files[]") MultipartFile[] files, HttpSession session) {
 		// Do custom steps here
 		// i.e. Save the file to a temporary location or database
 		logger.debug("Writing file to disk...done");
 		List<UploadedFile> uploadedFiles = new ArrayList<UploadedFile>();
 		for (MultipartFile file : files) {
+			storeFile(file, getRealFileStorePath(session.getServletContext(), file.getOriginalFilename()));
+			
 			UploadedFile u = new UploadedFile(file.getOriginalFilename(),
 					Long.valueOf(file.getSize()).intValue(),
-					"http://localhost:8080/spring-fileupload-tutorial/resources/"+file.getOriginalFilename());
+					"http://localhost:8080/spring-fileupload-tutorial/resources/uuupload/"+file.getOriginalFilename());
 
 			uploadedFiles.add(u);
 		}
 		
 		return uploadedFiles;
+	}
+	private void storeFile(MultipartFile file, String destination) {
+		try {
+			file.transferTo(new File(destination));
+		} catch (IllegalStateException e) {
+			logger.warn("Failed to store file", e);
+		} catch (IOException e) {
+			logger.warn("Failed to store file", e);
+		}
+	}
+	private String getRealFileStorePath(ServletContext context, String originalFilename) {
+		return context.getRealPath("/resources/uuupload/"+originalFilename);
 	}
 }
